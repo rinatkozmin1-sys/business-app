@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Бизнес Апп для Дианы</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #121212;
+            --tg-theme-text-color: #e0e0e0;
+            --surface: #1e1e1e;
+            --surface-elevated: #252525;
+            --border-neon: rgba(79, 195, 247, 0.55);
+            --border-gold: rgba(255, 200, 0, 0.45);
+            --text-gold: #FFC800;
+            --uo-green: #58CC02;
+            --uo-green-dark: #58A700;
+            --uo-yellow: #FFC800;
+            --uo-yellow-dark: #D9AA00;
+            --uo-blue: #1CB0F6;
+            --uo-blue-dark: #1899D6;
+            --uo-purple: #CE82FF;
+            --uo-purple-dark: #A867D6;
+            --uo-ch5-red: #FF4B4B;
+            --uo-ch5-red-dark: #D73939;
+            --uo-red: #EA2B2B;
+            --uo-red-dark: #B81A1A;
+            --uo-gray: #2a2a2a;
+            --uo-gray-border: #3a3a3a;
+            --level-locked-bg: #333333;
+            --level-locked-text: #5a5a5a;
+            --emerald: #00c853;
+            --emerald-dark: #007a3d;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: "DIN Round Pro", "Inter", sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2a2a35 0%, #121212 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.05;
+            background-image: url("./assets/bg-pattern.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .screen { width: 100%; display: none; position: relative; z-index: 1; }
+        .screen.active { display: flex; }
+        .screen-col,
+        .main-container {
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .app-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .header-left,
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pill {
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 10px 12px;
+            font-size: 16px;
+            font-weight: 900;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            color: #e0e0e0;
+        }
+        .pill--chapter {
+            color: #FFD700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+        .pill .pill-value {
+            color: #FFD700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+        .pill .pill-muted {
+            color: #e0e0e0;
+        }
+        .pill--lives .pill-muted {
+            color: #ffffff;
+        }
+        .pill-with-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-btn {
+            border: 1px solid var(--border-neon);
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 8px 10px;
+            font-size: 16px;
+            font-weight: 900;
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.12);
+            cursor: pointer;
+        }
+        .back-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .level-map {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 16px;
+        }
+        .level-path {
+            width: 100%;
+            max-width: 310px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 6px 0;
+        }
+        .level-path::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            background: #333;
+            border-radius: 2px;
+            z-index: 0;
+        }
+        .level-path.path-active-trail::before {
+            box-shadow: 0 0 14px rgba(76, 175, 80, 0.45), 0 0 6px rgba(76, 175, 80, 0.3);
+        }
+        .level-node-wrap {
+            width: 100%;
+            display: flex;
+            position: relative;
+            z-index: 1;
+        }
+        .level-node-wrap.odd {
+            justify-content: flex-start;
+            padding-left: 26px;
+        }
+        .level-node-wrap.even {
+            justify-content: flex-end;
+            padding-right: 26px;
+        }
+        .level-node-wrap::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 2px;
+            background: #333;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+        .level-node-wrap.connector-active-trail::after {
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.4), 0 0 4px rgba(76, 175, 80, 0.25);
+        }
+        .level-node {
+            position: relative;
+            width: 66px;
+            height: 66px;
+            border-radius: 999px;
+            border: 2px solid var(--emerald-dark);
+            background: linear-gradient(145deg, #00e676 0%, #00a844 55%, #007a33 100%);
+            color: #fff;
+            font-size: 20px;
+            font-weight: 900;
+            box-shadow: 0 5px 0 var(--emerald-dark), 0 0 18px rgba(0, 255, 120, 0.35);
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+            overflow: hidden;
+        }
+        .level-node--current {
+            background: linear-gradient(145deg, #1a3a22, #0f2415);
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 20px 2px rgba(76, 175, 80, 0.5), inset 0 0 10px rgba(76, 175, 80, 0.4);
+            color: #ffffff;
+        }
+        .level-node--current::before {
+            display: none;
+        }
+        .level-node--completed {
+            background: linear-gradient(145deg, #1b5e20 0%, #0d3d12 100%);
+            border-color: rgba(255, 200, 0, 0.35);
+            box-shadow: 0 4px 0 #0a2e0f, 0 0 10px rgba(255, 200, 0, 0.12);
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .level-node--completed::before {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            border-radius: inherit;
+            background: repeating-linear-gradient(
+                135deg,
+                transparent,
+                transparent 3px,
+                rgba(255, 200, 0, 0.06) 3px,
+                rgba(255, 200, 0, 0.06) 6px
+            );
+            pointer-events: none;
+        }
+        .level-node:active:not(.locked):not(.level-node--current) {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 var(--emerald-dark), 0 0 14px rgba(0, 255, 120, 0.35);
+        }
+        .level-node--current:active {
+            transform: translateY(1px);
+            box-shadow: 0 0 16px 2px rgba(76, 175, 80, 0.45), inset 0 0 10px rgba(76, 175, 80, 0.35);
+        }
+        .level-node.locked {
+            background: #1e1e1e;
+            border: 2px solid #2a2a2a;
+            box-shadow: 4px 4px 10px #0a0a0a, -4px -4px 10px #323232;
+            color: #555555;
+            cursor: default;
+            opacity: 1;
+        }
+        .level-node.locked:active {
+            transform: none;
+            box-shadow: 4px 4px 10px #0a0a0a, -4px -4px 10px #323232;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 16px;
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--uo-green), #69f0ae);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 120, 0.35);
+        }
+        .score-text {
+            font-weight: 900;
+            font-size: 16px;
+            color: #9e9e9e;
+            white-space: nowrap;
+        }
+
+        .quiz-container {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .character-placeholder {
+            padding-top: 5px;
+            min-width: 40px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .question-card {
+            flex-grow: 1;
+            background: var(--surface);
+            border: 1px solid rgba(255, 200, 0, 0.35);
+            border-radius: 16px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 0 #141414, 0 0 16px rgba(255, 200, 0, 0.08);
+            position: relative;
+        }
+        .question-card::after {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 15px;
+            width: 0; height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-right: 10px solid rgba(255, 200, 0, 0.35);
+        }
+        .question-card::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 15px;
+            width: 0; height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-right: 10px solid var(--surface);
+            z-index: 1;
+        }
+        .question-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 5px 0;
+            color: #e0e0e0;
+        }
+        .question-text {
+            font-size: 16px;
+            margin: 0;
+            color: #ffffff;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .option-button {
+            background-color: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 16px;
+            padding: 18px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #e8e8e8;
+            text-align: left;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 0 #1a1a1a;
+            transition: box-shadow 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+            position: relative;
+        }
+        @media (hover: hover) {
+            .option-button:hover:not(.selected):not(.disabled) {
+                border-color: rgba(255, 255, 255, 0.35);
+                box-shadow: 0 4px 0 #1a1a1a, 0 0 14px rgba(255, 255, 255, 0.12);
+            }
+        }
+        .option-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #141414;
+        }
+        .option-button.selected.correct {
+            background-color: var(--uo-green);
+            border-color: var(--uo-green);
+            color: #fff;
+            box-shadow: 0 4px 0 var(--uo-green-dark);
+        }
+        .option-button.selected.correct:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--uo-green-dark);
+        }
+        .option-button.selected.incorrect {
+            background-color: var(--uo-red);
+            border-color: var(--uo-red);
+            color: #fff;
+            box-shadow: 0 4px 0 var(--uo-red-dark);
+        }
+        .option-button.selected.incorrect:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--uo-red-dark);
+        }
+        .option-button.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .result-header {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .review-title {
+            width: 100%;
+            margin: 0;
+            font-size: 30px;
+            font-weight: 900;
+            text-align: left;
+            color: #e0e0e0;
+        }
+        .review-list {
+            width: 100%;
+            max-height: 58vh;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+        .mistake-card {
+            background: var(--surface);
+            border: 1px solid #3a3a3a;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 4px 0 #141414;
+        }
+        .mistake-question {
+            margin: 0 0 8px 0;
+            font-weight: 900;
+            font-size: 17px;
+            color: #f5f5f5;
+        }
+        .mistake-wrong {
+            margin: 0 0 6px 0;
+            color: var(--uo-red);
+            font-weight: 700;
+        }
+        .mistake-right {
+            margin: 0 0 10px 0;
+            color: var(--uo-green-dark);
+            font-weight: 700;
+        }
+        .mistake-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mistake-exp {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 10px;
+            color: #b0b0b0;
+            margin: 0;
+            line-height: 1.35;
+        }
+        .icon-owl {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            display: block;
+        }
+        .icon-heart {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .icon-money {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .icon-result {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            display: block;
+        }
+        .icon-trophy-gold {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 0 12px rgba(255, 200, 0, 0.65)) brightness(1.15) saturate(1.2);
+        }
+        .icon-inline {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        .result-card {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid rgba(255, 200, 0, 0.25);
+            border-radius: 16px;
+            padding: 22px 20px;
+            box-shadow: 0 4px 0 #141414, 0 0 20px rgba(255, 200, 0, 0.06);
+            text-align: center;
+        }
+        .trophy {
+            margin: 6px 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-text {
+            font-size: 20px;
+            font-weight: 900;
+            margin: 0 0 16px;
+            color: var(--text-gold);
+        }
+        .primary-green {
+            width: 100%;
+            background-color: var(--uo-green);
+            border: 2px solid var(--uo-green);
+            border-radius: 16px;
+            padding: 18px 20px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--uo-green-dark);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .primary-green:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--uo-green-dark);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 20px;
+            z-index: 50;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            width: 100%;
+            max-width: 330px;
+            background: var(--surface);
+            border: 1px solid var(--border-neon);
+            border-radius: 16px;
+            box-shadow: 0 0 24px rgba(79, 195, 247, 0.15);
+            padding: 18px 16px;
+            text-align: center;
+        }
+        .modal-title {
+            margin: 0 0 14px;
+            font-size: 22px;
+            font-weight: 900;
+            color: #e0e0e0;
+        }
+        #splashScreen {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 500ms ease;
+        }
+        #splashScreen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .intro-video {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .intro-start-btn {
+            position: absolute;
+            z-index: 10000;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 260px;
+            border: 2px solid var(--uo-green);
+            background: var(--uo-green);
+            color: #fff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 22px;
+            font-weight: 900;
+            box-shadow: 0 4px 0 var(--uo-green-dark);
+            cursor: pointer;
+        }
+        .intro-start-btn:active {
+            transform: translate(-50%, calc(-50% + 2px));
+            box-shadow: 0 2px 0 var(--uo-green-dark);
+        }
+        .intro-skip-btn {
+            position: absolute;
+            z-index: 10000;
+            top: 16px;
+            right: 16px;
+            border: 2px solid rgba(255,255,255,0.85);
+            background: rgba(0,0,0,0.35);
+            color: #fff;
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .intro-skip-btn:active {
+            transform: translateY(2px);
+        }
+
+        /* Boss quiz (timed) */
+        #bossQuizScreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: radial-gradient(circle at 50% 0%, #1a1a22 0%, #0d0d0f 100%);
+        }
+        #bossQuizScreen.active {
+            display: flex;
+        }
+        .boss-quiz-inner {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(30, 30, 40, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 20px 18px 22px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 1px rgba(255, 215, 0, 0.15);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+        }
+        .boss-quiz-title {
+            margin: 0 0 14px;
+            font-size: 22px;
+            font-weight: 900;
+            text-align: center;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+        }
+        #bossTimer {
+            font-size: 56px;
+            font-weight: 950;
+            text-align: center;
+            line-height: 1;
+            margin: 0 0 18px;
+            color: #ff1744;
+            text-shadow:
+                0 0 12px rgba(255, 23, 68, 0.85),
+                0 0 28px rgba(255, 23, 68, 0.45);
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+        .boss-question-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f5f5f5;
+            line-height: 1.4;
+            margin: 0 0 16px;
+        }
+        .boss-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .boss-option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #eaeaea;
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #141414;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .boss-option-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #0a0a0a;
+        }
+        .boss-option-btn:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+        #bossFlashOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 201;
+            pointer-events: none;
+        }
+        #bossFlashOverlay.show {
+            display: block;
+        }
+        #bossFlashOverlay.flash-green {
+            background: rgba(76, 175, 80, 0.35);
+            animation: bossFlashFade 0.45s ease-out forwards;
+        }
+        #bossFlashOverlay.flash-red {
+            background: rgba(244, 67, 54, 0.35);
+            animation: bossFlashFade 0.45s ease-out forwards;
+        }
+        @keyframes bossFlashFade {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        #bossToast {
+            display: none;
+            position: fixed;
+            left: 50%;
+            bottom: 28%;
+            transform: translateX(-50%);
+            z-index: 202;
+            max-width: 90%;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 16px;
+            text-align: center;
+            background: rgba(20, 20, 28, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+        }
+        #bossToast.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+    <audio id="tickSound" src="https://www.soundjay.com/clock/sounds/clock-ticking-2.mp3" preload="auto"></audio>
+    <div id="splashScreen">
+        <video id="introVideo" class="intro-video" src="./assets/intro.mp4" playsinline preload="auto"></video>
+        <button id="startIntroBtn" class="intro-start-btn" type="button">▶️ Начать</button>
+        <button id="skipIntroBtn" class="intro-skip-btn" type="button">Пропустить</button>
+    </div>
+
+    <div class="screen active" id="homeScreen">
+        <div class="screen-col">
+            <div class="app-header">
+                <div class="header-left">
+                    <div class="pill pill-with-icon" id="xpBalance"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b5.png" alt="Balance" class="icon-money"> <span class="pill-value">0 $</span></div>
+                    <div class="pill pill-with-icon pill--lives" id="homeLives"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2764.png" alt="Lives" class="icon-heart"> <span class="pill-muted">3</span></div>
+                </div>
+                <div class="pill pill--chapter" id="chapterLabel">Глава 1</div>
+            </div>
+
+            <div class="level-map">
+                <div class="level-path" id="levelPath"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="quizScreen">
+        <div class="main-container">
+            <div class="app-header">
+                <button class="back-btn" id="quizBackBtn" type="button">⬅️ Назад</button>
+                <div class="header-right">
+                    <div class="pill pill-with-icon pill--lives" id="quizLives"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2764.png" alt="Lives" class="icon-heart"> <span class="pill-muted">3</span></div>
+                </div>
+            </div>
+            <div class="header">
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <span class="score-text" id="score">1/5</span>
+            </div>
+
+            <div class="quiz-container">
+                <div class="character-placeholder" id="duoOwl"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f989.png" alt="Assistant owl" class="icon-owl"></div>
+                <div class="question-card">
+                    <h2 class="question-title">Ответьте на вопрос:</h2>
+                    <p class="question-text" id="questionText">Подготовка урока...</p>
+                </div>
+            </div>
+
+            <div class="options-list" id="optionsList"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="resultScreen">
+        <div class="screen-col">
+            <div class="result-header">
+                <button class="back-btn" id="resultBackBtn" type="button">⬅️ Назад</button>
+            </div>
+            <div class="result-card">
+                <div class="trophy"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f3c6.png" alt="Trophy" class="icon-trophy-gold"></div>
+                <p class="result-text" id="resultText">Урок пройден! +0 $</p>
+                <button class="primary-green pill-with-icon" id="continueBtn" type="button"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b5.png" alt="Dollars" class="icon-money"> Продолжить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reviewScreen" class="screen" style="display: none;">
+        <div class="screen-col">
+            <h2 class="review-title">Работа над ошибками 🧐</h2>
+            <div class="review-list" id="reviewList"></div>
+            <button class="primary-green" id="reviewDoneBtn" type="button">Понятно</button>
+        </div>
+    </div>
+
+    <div id="bossQuizScreen" style="display: none;">
+        <div class="boss-quiz-inner">
+            <h2 class="boss-quiz-title">🔥 Босс-уровень</h2>
+            <div id="bossTimer">10</div>
+            <p class="boss-question-text" id="bossQuestionText"></p>
+            <div class="boss-options-list" id="bossOptionsList"></div>
+        </div>
+    </div>
+    <div id="bossFlashOverlay" aria-hidden="true"></div>
+    <div id="bossToast" role="status"></div>
+
+    <div class="modal-overlay" id="livesModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Жизни закончились</h3>
+            <button class="primary-green" id="modalOkBtn" type="button">Понятно</button>
+        </div>
+    </div>
+
+    <script>
+       const questionBank = [
+  // Маркетинг
+  { 
+    q: "Что такое LTV (Lifetime Value)?", 
+    a: ["Прибыль от клиента за всё время работы", "Время ответа менеджера", "Стоимость клика", "Бюджет на день"], 
+    c: 0,
+    exp: "LTV показывает пожизненную ценность клиента. Это сумма чистой прибыли, которую приносит человек за всё время, пока покупает у вас."
+  },
+  { 
+    q: "Что показывает метрика CAC?", 
+    a: ["Процент конверсии сайта", "Стоимость привлечения одного клиента", "Количество отказов", "Охват поста"], 
+    c: 1,
+    exp: "CAC (Customer Acquisition Cost) — это все ваши затраты на маркетинг и продажи, поделенные на количество новых клиентов."
+  },
+  { 
+    q: "Какой канал трафика дает самые 'теплые' лиды?", 
+    a: ["Холодные звонки", "Контекстная реклама по бренду", "Баннеры на улице", "Спам-рассылка"], 
+    c: 1,
+    exp: "Контекстная реклама по брендовым запросам ловит людей, которые уже ищут именно вашу компанию, поэтому они максимально готовы к покупке."
+  },
+  { 
+    q: "Что такое Ретаргетинг?", 
+    a: ["Показ рекламы тем, кто уже был на сайте", "Смена дизайна сайта", "Написание SEO-статей", "Скидка новым клиентам"], 
+    c: 0,
+    exp: "Ретаргетинг (или ремаркетинг) 'догоняет' рекламой тех пользователей, которые заходили на ваш сайт, но ушли без покупки."
+  },
+  { 
+    q: "Для чего нужен A/B тест?", 
+    a: ["Для увольнения сотрудников", "Для сравнения двух вариантов дизайна/текста", "Для расчета налогов", "Для создания логотипа"], 
+    c: 1,
+    exp: "A/B тест помогает понять, какая версия сайта, кнопки или заголовка приносит больше продаж, опираясь на реальные цифры, а не на интуицию."
+  },
+  
+  // Бизнес и Управление
+  { 
+    q: "Что значит запустить MVP?", 
+    a: ["Нанять дорогих топов", "Сделать минимально рабочую версию для теста", "Взять кредит в банке", "Купить офис"], 
+    c: 1,
+    exp: "MVP (Minimum Viable Product) позволяет запустить продукт с базовым функционалом, чтобы быстро и дешево проверить, нужен ли он рынку."
+  },
+  { 
+    q: "Что такое Фулфилмент?", 
+    a: ["Комплекс операций от хранения до доставки", "Создание контента", "Написание кода", "Поиск инвестора"], 
+    c: 0,
+    exp: "Фулфилмент берет на себя всю физическую рутину e-commerce: приемку товара на склад, упаковку заказов и передачу их в курьерскую службу."
+  },
+  { 
+    q: "Какой показатель отражает 'чистыми на руки'?", 
+    a: ["Выручка", "Оборот", "Чистая прибыль", "Маржинальность"], 
+    c: 2,
+    exp: "Чистая прибыль — это деньги, которые остаются у бизнеса после вычета абсолютно всех расходов, налогов и зарплат. Это реальный заработок."
+  },
+  { 
+    q: "Что такое B2B продажи?", 
+    a: ["Бизнес продает людям", "Бизнес продает другому бизнесу", "Государство продает людям", "Люди продают на Авито"], 
+    c: 1,
+    exp: "B2B (Business-to-Business) — это модель, где вашими клиентами являются другие компании, а не обычные физлица (например, продажа CRM-систем)."
+  },
+  { 
+    q: "Что такое 'Кассовый разрыв'?", 
+    a: ["Поломка кассового аппарата", "Ситуация, когда нет денег на текущие расходы, хотя прибыль есть", "Скидка для клиентов", "Налог на прибыль"], 
+    c: 1,
+    exp: "Это временная нехватка денег на счетах. Например, вы отгрузили товар с отсрочкой платежа, на бумаге вы в плюсе, но платить за аренду прямо сейчас нечем."
+  },
+  
+  // Экономика и Инвестиции
+  { 
+    q: "Кто такой 'Бизнес-ангел'?", 
+    a: ["Успешный маркетолог", "Частный инвестор, вкладывающий на ранней стадии", "Сотрудник налоговой", "Ментор без денег"], 
+    c: 1,
+    exp: "Бизнес-ангелы — это частные лица (часто сами успешные предприниматели), которые дают деньги стартапам на самом старте в обмен на долю в компании."
+  },
+  { 
+    q: "Что такое 'Диверсификация'?", 
+    a: ["Вложение всех денег в один стартап", "Распределение средств по разным активам для снижения риска", "Продажа бизнеса", "Увольнение штата"],c: 1,
+    exp: "Правило 'не клади все яйца в одну корзину'. Распределяя деньги между разными проектами или акциями, вы защищаете капитал от полного краха."
+  },
+  { 
+    q: "Что такое ROI?", 
+    a: ["Коэффициент возврата инвестиций", "Правило найма сотрудников", "Процентная ставка банка", "Название рекламной сети"], 
+    c: 0,
+    exp: "ROI (Return on Investment) показывает рентабельность вложений. Если ROI больше 100%, значит инвестиция окупилась и принесла прибыль."
+  },
+  { 
+    q: "Чем отличаются акции от облигаций?", 
+    a: ["Ничем", "Облигация — это долг, а акция — доля в компании", "Акции всегда падают", "Облигации продаются только государством"], 
+    c: 1,
+    exp: "Покупая акцию, вы становитесь совладельцем бизнеса. Покупая облигацию, вы просто даете компании деньги в долг под фиксированный процент."
+  },
+  { 
+    q: "Что такое маржа?", 
+    a: ["Имя секретарши", "Разница между ценой и себестоимостью", "Оборот за месяц", "Бюджет на рекламу"], 
+    c: 1,
+    exp: "Маржа показывает прибыльность самого товара. Это разница между тем, за сколько вы товар продали, и тем, сколько потратили на его создание/закупку."
+  }
+];
+
+const bossQuizBank = [
+  {
+    q: "Стив Джобс: Что стало главной причиной спасения Apple от банкротства после возвращения Джобса в 1997 году?",
+    a: ["Сокращение линейки продуктов до 4 базовых устройств", "Продажа компании Microsoft", "Массовое увольнение всех старых сотрудников"],
+    c: 0
+  },
+  {
+    q: "Генри Форд: Какое революционное нововведение позволило Форду сделать автомобили доступными для массового потребителя?",
+    a: ["Использование дешевого пластика вместо металла", "Внедрение движущейся конвейерной сборки", "Полный отказ от затрат на рекламу"],
+    c: 1
+  },
+  {
+    q: "Рэй Крок (McDonald's): На чем на самом деле строилась финансовая империя McDonald's (помимо бургеров)?",
+    a: ["На продаже детских игрушек Хэппи Мил", "На производстве автоматов для милкшейков", "На недвижимости (сдача земли в аренду франчайзи)"],
+    c: 2
+  },
+  {
+    q: "Фил Найт (Nike): Как основатель Nike продавал свои самые первые кроссовки, когда у него еще не было магазинов?",
+    a: ["Через почтовые каталоги", "Из багажника своего автомобиля на соревнованиях по бегу", "Раздавал бесплатно студентам на улице"],
+    c: 1
+  },
+  {
+    q: "Илон Маск: Что помогло спасти SpaceX от полного закрытия после трех неудачных запусков ракет подряд?",
+    a: ["Секретный кредит от правительства США", "Продажа доли в Tesla китайским конкурентам", "Четвертый успешный запуск на последние оставшиеся деньги"],
+    c: 2
+  }
+];
+
+        const TOTAL_LEVELS = 50;
+        const LEVELS_PER_CHAPTER = 10;
+        const SCORE_PER_CORRECT = 5;
+        const INITIAL_LIVES = 3;
+        const tg = window.Telegram?.WebApp;
+        try { tg?.expand?.(); } catch (_) {}
+        try { tg?.ready?.(); } catch (_) {}
+
+        const homeScreenEl = document.getElementById("homeScreen");
+        const splashScreenEl = document.getElementById("splashScreen");
+        const introVideoEl = document.getElementById("introVideo");
+        const startIntroBtnEl = document.getElementById("startIntroBtn");
+        const skipIntroBtnEl = document.getElementById("skipIntroBtn");
+        const quizScreenEl = document.getElementById("quizScreen");
+        const resultScreenEl = document.getElementById("resultScreen");
+        const reviewScreenEl = document.getElementById("reviewScreen");
+        const levelPathEl = document.getElementById("levelPath");
+        const chapterLabelEl = document.getElementById("chapterLabel");
+        const xpBalanceEl = document.getElementById("xpBalance");
+        const homeLivesEl = document.getElementById("homeLives");
+        const quizLivesEl = document.getElementById("quizLives");
+        const progressBarFillEl = document.getElementById("progressBar");
+        const scoreTextEl = document.getElementById("score");
+        const duoOwlEl = document.getElementById("duoOwl");
+        const questionTextEl = document.getElementById("questionText");
+        const optionsListEl = document.getElementById("optionsList");
+        const resultTextEl = document.getElementById("resultText");
+        const continueBtnEl = document.getElementById("continueBtn");
+        const reviewListEl = document.getElementById("reviewList");
+        const reviewDoneBtnEl = document.getElementById("reviewDoneBtn");
+        const quizBackBtnEl = document.getElementById("quizBackBtn");
+        const resultBackBtnEl = document.getElementById("resultBackBtn");
+        const livesModalEl = document.getElementById("livesModal");
+        const modalOkBtnEl = document.getElementById("modalOkBtn");
+        const bossQuizScreenEl = document.getElementById("bossQuizScreen");
+        const bossTimerEl = document.getElementById("bossTimer");
+        const bossQuestionTextEl = document.getElementById("bossQuestionText");
+        const bossOptionsListEl = document.getElementById("bossOptionsList");
+        const bossFlashOverlayEl = document.getElementById("bossFlashOverlay");
+        const bossToastEl = document.getElementById("bossToast");
+        const ICONS = {
+            owl: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f989.png",
+            heart: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2764.png",
+            money: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b5.png",
+            correct: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2705.png",
+            wrong: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/274c.png"
+        };
+
+        let userBalance = 0;
+        let userLives = INITIAL_LIVES;
+        let lives = INITIAL_LIVES;
+        let unlockedLevel = 1;
+        let currentLevel = 1;
+        let currentQuestionIndex = 0;
+        let currentLessonQuestions = [];
+        let currentLevelScore = 0;
+        let currentMistakes = [];
+        let lastCompletedLevel = 1;
+        let bossTimerInterval = null;
+        let bossAnswerLocked = false;
+        let lastClickSoundAt = 0;
+
+        function getChapterByLevel(level) {
+            return Math.ceil(level / LEVELS_PER_CHAPTER);
+        }
+
+        function getQuestionsCountByChapter(chapter) {
+            return 4 + chapter; // 1->5, 2->6, ... 5->9
+        }
+
+        function shuffleArray(arr) {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = copy[i];
+                copy[i] = copy[j];
+                copy[j] = temp;
+            }
+            return copy;
+        }
+
+        function buildLevelQuestions(level) {
+            const chapter = getChapterByLevel(level);
+            const needed = getQuestionsCountByChapter(chapter);
+            const takeCount = Math.min(needed, questionBank.length);
+
+            // 1) Выбираем случайные вопросы БЕЗ повторений внутри урока
+            const selectedRaw = shuffleArray(questionBank).slice(0, takeCount);
+
+            // 2) Для каждого вопроса перемешиваем ответы и сохраняем корректный флаг
+            return selectedRaw.map((item) => {
+                const answersWithFlags = item.a.map((text, index) => ({
+                    text,
+                    correct: index === item.c
+                }));
+
+                return {
+                    question: item.q,
+                    answers: shuffleArray(answersWithFlags),
+                    explanation: item.exp || "Объяснение недоступно."
+                };
+            });
+        }
+
+        function setActiveScreen(name) {
+            homeScreenEl.classList.remove("active");
+            quizScreenEl.classList.remove("active");
+            resultScreenEl.classList.remove("active");
+            reviewScreenEl.classList.remove("active");
+            reviewScreenEl.style.display = "none";
+            bossQuizScreenEl.classList.remove("active");
+            bossQuizScreenEl.style.display = "none";
+            if (name === "home") homeScreenEl.classList.add("active");
+            if (name === "quiz") quizScreenEl.classList.add("active");
+            if (name === "result") resultScreenEl.classList.add("active");
+            if (name === "review") {
+                reviewScreenEl.classList.add("active");
+                reviewScreenEl.style.display = "flex";
+            }
+            if (name === "boss") {
+                bossQuizScreenEl.classList.add("active");
+                bossQuizScreenEl.style.display = "flex";
+            }
+        }
+
+        function updateTopStats() {
+            xpBalanceEl.innerHTML = `<img src="${ICONS.money}" alt="Balance" class="icon-money"> <span class="pill-value">${userBalance} $</span>`;
+            homeLivesEl.innerHTML = `<img src="${ICONS.heart}" alt="Lives" class="icon-heart"> <span class="pill-muted">${userLives}</span>`;
+            quizLivesEl.innerHTML = `<img src="${ICONS.heart}" alt="Lives" class="icon-heart"> <span class="pill-muted">${lives}</span>`;
+            chapterLabelEl.innerText = `Глава ${getChapterByLevel(unlockedLevel)}`;
+        }
+
+        function createLevelButton(level) {
+            const wrap = document.createElement("div");
+            wrap.className = `level-node-wrap ${level % 2 === 0 ? "even" : "odd"}`;
+            if (level <= unlockedLevel) {
+                wrap.classList.add("connector-active-trail");
+            }
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "level-node";
+            button.innerText = String(level);
+            button.dataset.level = String(level);
+
+            const isLocked = level > unlockedLevel;
+            const isCompleted = level < unlockedLevel;
+            const isCurrent = level === unlockedLevel;
+
+            if (isLocked) {
+                button.classList.add("locked");
+                button.disabled = true;
+                button.setAttribute("aria-label", `Уровень ${level} (заблокирован)`);
+            } else {
+                if (isCurrent) button.classList.add("level-node--current");
+                else if (isCompleted) button.classList.add("level-node--completed");
+                button.setAttribute("aria-label", `Уровень ${level}`);
+                button.addEventListener("click", () => startLevel(level));
+            }
+
+            wrap.appendChild(button);
+            return wrap;
+        }
+
+        function renderLevelMap() {
+            levelPathEl.innerHTML = "";
+            levelPathEl.classList.toggle("path-active-trail", unlockedLevel > 1);
+            for (let level = 1; level <= TOTAL_LEVELS; level++) {
+                levelPathEl.appendChild(createLevelButton(level));
+            }
+        }
+
+        function showLivesModal() {
+            livesModalEl.classList.add("active");
+        }
+
+        function hideLivesModal() {
+            livesModalEl.classList.remove("active");
+        }
+
+        function resetToHome() {
+            currentLessonQuestions = [];
+            currentQuestionIndex = 0;
+            currentLevelScore = 0;
+            currentMistakes = [];
+            lives = userLives;
+            progressBarFillEl.style.width = "0%";
+            scoreTextEl.innerText = "0/0";
+            duoOwlEl.innerHTML = `<img src="${ICONS.owl}" alt="Assistant owl" class="icon-owl">`;
+            updateTopStats();
+            setActiveScreen("home");
+        }
+
+        function startLevel(level) {
+            currentLevel = level;
+            currentQuestionIndex = 0;
+            currentLevelScore = 0;
+            currentMistakes = [];
+            lives = userLives;
+            currentLessonQuestions = buildLevelQuestions(level);
+            scoreTextEl.innerText = `1/${currentLessonQuestions.length}`;
+            progressBarFillEl.style.width = "0%";
+            updateTopStats();
+            setActiveScreen("quiz");
+            showQuestion();
+        }
+
+        function showQuestion() {
+            optionsListEl.innerHTML = "";
+            const currentQuestion = currentLessonQuestions[currentQuestionIndex];
+            questionTextEl.innerText = currentQuestion.question;
+            duoOwlEl.innerHTML = `<img src="${ICONS.owl}" alt="Assistant owl" class="icon-owl">`;
+
+            const progress = ((currentQuestionIndex + 1) / currentLessonQuestions.length) * 100;
+            progressBarFillEl.style.width = `${progress}%`;
+            scoreTextEl.innerText = `${currentQuestionIndex + 1}/${currentLessonQuestions.length}`;
+
+            currentQuestion.answers.forEach((answer) => {
+                const button = document.createElement("button");
+                button.classList.add("option-button");
+                button.innerText = answer.text;
+                button.addEventListener("click", () => checkAnswer(button, answer));
+                optionsListEl.appendChild(button);
+            });
+        }
+
+        function finishLesson() {
+            const earned = Number(currentLevelScore) || 0;
+            resultTextEl.textContent = `Урок пройден! +${earned} $`;
+            setActiveScreen("result");
+        }
+
+        function stopBossTimer() {
+            if (bossTimerInterval !== null) {
+                clearInterval(bossTimerInterval);
+                bossTimerInterval = null;
+            }
+            const tickSnd = document.getElementById("tickSound");
+            if (tickSnd) {
+                tickSnd.pause();
+                tickSnd.currentTime = 0;
+            }
+        }
+
+        function playClick() {
+            const now = Date.now();
+            if (now - lastClickSoundAt < 80) return;
+            lastClickSoundAt = now;
+            const snd = document.getElementById("clickSound");
+            if (!snd) return;
+            snd.volume = 0.5;
+            snd.currentTime = 0;
+            snd.play().then(() => {
+                console.log("Звук клика запущен");
+            }).catch(() => {});
+        }
+
+        function showBossToast(message) {
+            bossToastEl.textContent = message;
+            bossToastEl.classList.add("show");
+        }
+
+        function maybeStartBossThenResult(completedLevel) {
+            if (completedLevel > 0 && completedLevel % 10 === 0) {
+                setActiveScreen("boss");
+                startBossQuiz();
+                return;
+            }
+            finishLesson();
+        }
+
+        function startBossQuiz() {
+            stopBossTimer();
+            bossAnswerLocked = false;
+            bossFlashOverlayEl.classList.remove("show", "flash-green", "flash-red");
+            bossToastEl.classList.remove("show");
+
+            const raw = bossQuizBank[Math.floor(Math.random() * bossQuizBank.length)];
+            const answersWithFlags = raw.a.map((text, index) => ({
+                text,
+                correct: index === raw.c
+            }));
+            const shuffled = shuffleArray(answersWithFlags);
+
+            bossQuestionTextEl.textContent = raw.q;
+            bossOptionsListEl.innerHTML = "";
+            shuffled.forEach((ans) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "boss-option-btn";
+                btn.textContent = ans.text;
+                btn.addEventListener("click", () => onBossOptionClick(ans));
+                bossOptionsListEl.appendChild(btn);
+            });
+
+            let t = 10;
+            bossTimerEl.textContent = String(t);
+            bossTimerInterval = setInterval(() => {
+                t -= 1;
+                bossTimerEl.textContent = String(t);
+                const tickSnd = document.getElementById("tickSound");
+                if (tickSnd) {
+                    tickSnd.currentTime = 0;
+                    tickSnd.play().catch(() => {});
+                }
+                if (t <= 0) {
+                    stopBossTimer();
+                    if (!bossAnswerLocked) {
+                        onBossTimeout();
+                    }
+                }
+            }, 1000);
+        }
+
+        function onBossOptionClick(answer) {
+            if (bossAnswerLocked) return;
+            bossAnswerLocked = true;
+            stopBossTimer();
+            bossOptionsListEl.querySelectorAll("button").forEach((b) => {
+                b.disabled = true;
+            });
+
+            if (answer.correct) {
+                bossFlashOverlayEl.classList.remove("flash-red");
+                bossFlashOverlayEl.classList.add("flash-green", "show");
+                setTimeout(() => {
+                    bossFlashOverlayEl.classList.remove("show", "flash-green");
+                }, 450);
+                userLives += 1;
+                updateTopStats();
+                showBossToast("Правильный ответ! +1 ❤️");
+                setTimeout(() => {
+                    bossToastEl.classList.remove("show");
+                    finishLesson();
+                }, 1600);
+            } else {
+                bossFlashOverlayEl.classList.remove("flash-green");
+                bossFlashOverlayEl.classList.add("flash-red", "show");
+                setTimeout(() => {
+                    bossFlashOverlayEl.classList.remove("show", "flash-red");
+                }, 450);
+                showBossToast("Неверно!");
+                setTimeout(() => {
+                    bossToastEl.classList.remove("show");
+                    finishLesson();
+                }, 1600);
+            }
+        }
+
+        function onBossTimeout() {
+            bossAnswerLocked = true;
+            stopBossTimer();
+            bossOptionsListEl.querySelectorAll("button").forEach((b) => {
+                b.disabled = true;
+            });
+            bossFlashOverlayEl.classList.remove("flash-green");
+            bossFlashOverlayEl.classList.add("flash-red", "show");
+            setTimeout(() => {
+                bossFlashOverlayEl.classList.remove("show", "flash-red");
+            }, 450);
+            showBossToast("Время вышло ⏰");
+            setTimeout(() => {
+                bossToastEl.classList.remove("show");
+                finishLesson();
+            }, 1600);
+        }
+
+        function renderReviewScreen() {
+            reviewListEl.innerHTML = "";
+            currentMistakes.forEach((mistake) => {
+                const card = document.createElement("div");
+                card.className = "mistake-card";
+                card.innerHTML = `
+                    <p class="mistake-question">${mistake.questionText}</p>
+                    <p class="mistake-wrong mistake-line"><img src="${ICONS.wrong}" alt="Wrong answer" class="icon-inline">Ваш ответ: ${mistake.wrongAnswerText}</p>
+                    <p class="mistake-right mistake-line"><img src="${ICONS.correct}" alt="Correct answer" class="icon-inline">Правильный ответ: ${mistake.correctAnswerText}</p>
+                    <p class="mistake-exp">💡 Почему: ${mistake.explanationText}</p>
+                `;
+                reviewListEl.appendChild(card);
+            });
+        }
+
+        function checkAnswer(clickedButton, answer) {
+            const isCorrect = answer.correct;
+            const allButtons = optionsListEl.querySelectorAll(".option-button");
+            allButtons.forEach((btn) => btn.classList.add("disabled"));
+            clickedButton.classList.add("selected");
+
+            if (isCorrect) {
+                clickedButton.classList.add("correct");
+                duoOwlEl.innerHTML = `<img src="${ICONS.owl}" alt="Assistant owl" class="icon-owl">`;
+                currentLevelScore += SCORE_PER_CORRECT;
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+            } else {
+                clickedButton.classList.add("incorrect");
+                duoOwlEl.innerHTML = `<img src="${ICONS.owl}" alt="Assistant owl" class="icon-owl">`;
+                lives = Math.max(0, lives - 1);
+                updateTopStats();
+                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("error");
+
+                const currentQuestion = currentLessonQuestions[currentQuestionIndex];
+                const correctAnswer = currentQuestion.answers.find((item) => item.correct);
+                currentMistakes.push({
+                    questionText: currentQuestion.question,
+                    wrongAnswerText: answer.text,
+                    correctAnswerText: correctAnswer ? correctAnswer.text : "Не найдено",
+                    explanationText: currentQuestion.explanation || "Объяснение недоступно."
+                });
+            }
+
+            setTimeout(() => {
+                if (lives === 0) {
+                    resetToHome();
+                    showLivesModal();
+                    return;
+                }
+
+                currentQuestionIndex += 1;
+                if (currentQuestionIndex < currentLessonQuestions.length) {
+                    showQuestion();
+                    return;
+                }
+
+                lastCompletedLevel = currentLevel;
+
+                if (unlockedLevel < TOTAL_LEVELS && currentLevel === unlockedLevel) {
+                    unlockedLevel += 1;
+                    renderLevelMap();
+                }
+                if (currentMistakes.length > 0) {
+                    renderReviewScreen();
+                    setActiveScreen("review");
+                } else {
+                    maybeStartBossThenResult(currentLevel);
+                }
+            }, 800);
+        }
+
+        quizBackBtnEl.addEventListener("click", () => {
+            resetToHome();
+        });
+
+        resultBackBtnEl.addEventListener("click", () => {
+            resetToHome();
+        });
+
+        continueBtnEl.addEventListener("click", () => {
+            userBalance += currentLevelScore;
+            resetToHome();
+        });
+
+        reviewDoneBtnEl.addEventListener("click", () => {
+            maybeStartBossThenResult(lastCompletedLevel);
+        });
+
+        modalOkBtnEl.addEventListener("click", () => {
+            hideLivesModal();
+        });
+
+        function finishIntro() {
+            try { introVideoEl.pause(); } catch (_) {}
+            splashScreenEl.classList.add("fade-out");
+            setTimeout(() => {
+                splashScreenEl.style.display = "none";
+                setActiveScreen("home");
+            }, 520);
+        }
+
+        function hideSplashImmediately() {
+            splashScreenEl.style.display = "none";
+            setActiveScreen("home");
+        }
+
+        startIntroBtnEl.addEventListener("click", () => {
+            const clickSnd = document.getElementById("clickSound");
+            const tickSnd = document.getElementById("tickSound");
+            if (clickSnd) {
+                clickSnd.volume = 0.5;
+                clickSnd.play().then(() => {
+                    clickSnd.pause();
+                    clickSnd.currentTime = 0;
+                }).catch(() => {});
+            }
+            if (tickSnd) {
+                tickSnd.volume = 0.5;
+                tickSnd.play().then(() => {
+                    tickSnd.pause();
+                    tickSnd.currentTime = 0;
+                }).catch(() => {});
+            }
+            startIntroBtnEl.style.display = "none";
+            introVideoEl.play().catch(() => {
+                hideSplashImmediately();
+            });
+        });
+
+        skipIntroBtnEl.addEventListener("click", () => {
+            try { introVideoEl.pause(); } catch (_) {}
+            finishIntro();
+        });
+
+        introVideoEl.onended = () => {
+            finishIntro();
+        };
+
+        introVideoEl.onerror = () => {
+            hideSplashImmediately();
+        };
+
+        updateTopStats();
+        renderLevelMap();
+        setActiveScreen("home");
+
+        document.addEventListener("click", (e) => {
+            if (e.target.tagName === "BUTTON" || e.target.closest(".level-btn")) {
+                playClick();
+            }
+        });
+    </script>
+</body>
+</html>
